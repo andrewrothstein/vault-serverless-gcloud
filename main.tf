@@ -195,3 +195,34 @@ resource "google_cloud_run_service" "vault_server" {
   }
   depends_on = [google_secret_manager_secret_version.vault_secret_v1]
 }
+
+resource "google_cloud_run_service_iam_member" "vault-server" {
+  location = google_cloud_run_service.vault_server.location
+  project = google_cloud_run_service.vault_server.project
+  service = google_cloud_run_service.vault_server.name
+  role = "roles/run.invoker"
+  member = "user:${var.admin_email}"
+}
+
+locals {
+  vault_addr = google_cloud_run_service.vault_server.status[0].url
+}
+
+output "VAULT_ADDR" {
+  value = local.vault_addr
+}
+
+data "google_service_account_id_token" "oidc" {
+  target_audience = local.vault_addr
+}
+
+data "http" "seal_status" {
+  url = "${local.vault_addr}/v1/sys/seal-status"
+  request_headers  = {
+    Authorization = "Bearer ${data.google_service_account_id_token.oidc.id_token}"
+  }
+}
+
+output "seal_status_response" {
+  value = data.http.seal_status.body
+}
