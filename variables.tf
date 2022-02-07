@@ -1,7 +1,15 @@
-variable project_id {
-  type        = string
-  description = "gcloud PROJECT_ID"
+variable organization_id {
+  type = number
 }
+
+variable tenant_project_name { 
+  type = string
+}
+
+variable tenant_project_id {
+  type = string
+}
+
 
 variable resource_labels {
   type = map
